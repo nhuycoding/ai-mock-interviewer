@@ -34,8 +34,10 @@ st.set_page_config(
 # CSS: Tối ưu hiển thị (Dark Mode Report Card + Clean UI)
 st.markdown("""
 <style>
-    /* Ẩn Header/Footer mặc định của Streamlit */
-    header, footer {visibility: hidden;}
+    /* Chỉ ẩn Footer, KHÔNG ẩn Header để giữ nút mở Menu Sidebar */
+    footer {visibility: hidden;}
+    
+    /* Tùy chỉnh nền trang chính */
     .main { background-color: #f8f9fa; }
     
     /* Bong bóng chat User */
@@ -279,7 +281,7 @@ with st.sidebar:
     
     # Nút Start
     col1, col2 = st.columns(2)
-    start_btn = col1.button("▶️ BẮT ĐẦU", type="primary", use_container_width=True)
+    start_btn = col1.button("▶️ START", type="primary", use_container_width=True)
     reset_btn = col2.button("🔄 RESET", use_container_width=True)
 
 # --- 4. LOGIC CHÍNH (MAIN APP) ---
