@@ -33,6 +33,11 @@ try:
 except ImportError:
     pass
 
+try:
+    import docx2txt
+except ImportError:
+    pass
+
 # ==============================================================================
 # 🔑 API KEY CONFIGURATION (AUTO-DETECT)
 # ==============================================================================
@@ -81,9 +86,9 @@ def call_llm(provider, model_name, api_key, prompt, image_data=None):
             genai.configure(api_key=api_key)
             # Expanded fallback list with delay logic
             candidates = [
-                'gemini-2.5-flash-live',
+                'gemini-2.5-flash',
                 'gemini-2.5-pro',
-                'gemini-2.5-flash'
+                'gemini-2.5-flash-live'
             ]
             
             last_error = ""
@@ -113,11 +118,28 @@ def call_llm(provider, model_name, api_key, prompt, image_data=None):
 # --- Helper Functions ---
 
 def extract_text_from_docx(file):
+    """
+    Robust DOCX extraction trying docx2txt first (lighter), then python-docx.
+    """
+    errors = []
+    
+    # Try 1: docx2txt (Preferred/Lighter)
+    try:
+        import docx2txt
+        text = docx2txt.process(file)
+        return text
+    except Exception as e:
+        errors.append(f"docx2txt failed: {e}")
+
+    # Try 2: python-docx (Fallback)
     try:
         import docx
         doc = docx.Document(file)
         return '\n'.join([p.text for p in doc.paragraphs])
-    except: return "Error reading .docx"
+    except Exception as e:
+        errors.append(f"python-docx failed: {e}")
+
+    return f"Error reading .docx file. Details: {'; '.join(errors)}"
 
 def process_uploaded_file(uploaded_file, provider, user_api_key):
     try:
@@ -127,7 +149,7 @@ def process_uploaded_file(uploaded_file, provider, user_api_key):
             for page in reader.pages:
                 text += page.extract_text() or ""
             return text
-        elif "word" in uploaded_file.type:
+        elif "word" in uploaded_file.type or uploaded_file.name.endswith('.docx'):
             return extract_text_from_docx(uploaded_file)
         elif uploaded_file.type in ["image/png", "image/jpeg", "image/jpg"]:
             image = Image.open(uploaded_file)
@@ -497,6 +519,3 @@ elif st.session_state.step == 'evaluation':
     if st.button("Start New Interview"):
         for key in st.session_state.keys(): del st.session_state[key]
         st.rerun()
-
-
-
