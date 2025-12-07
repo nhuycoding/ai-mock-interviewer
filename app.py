@@ -80,7 +80,7 @@ def call_llm(provider, model_name, api_key, prompt, image_data=None):
         try:
             genai.configure(api_key=api_key)
             # Fallback list of models to try
-            candidates = ['gemini-2.0-flash-exp', 'gemini-1.5-flash', 'gemini-1.5-pro-latest']
+            candidates = ['gemini-2.0-flash-exp', 'gemini-1.5-flash', 'gemini-1.5-pro-latest', 'gemini-2.5-pro']
             
             for m in candidates:
                 try:
@@ -484,3 +484,4 @@ elif st.session_state.step == 'evaluation':
     if st.button("Start New Interview"):
         for key in st.session_state.keys(): del st.session_state[key]
         st.rerun()
+
