@@ -71,7 +71,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- Universal LLM Caller ---
+# --- Universal LLM Caller (Robust with Retry) ---
 def call_llm(provider, model_name, api_key, prompt, image_data=None):
     if not api_key: return "Error: API Key missing."
     
@@ -79,22 +79,36 @@ def call_llm(provider, model_name, api_key, prompt, image_data=None):
     if provider == "Google Gemini":
         try:
             genai.configure(api_key=api_key)
-            # Fallback list of models to try
-            candidates = ['gemini-2.0-flash-exp', 'gemini-1.5-flash', 'gemini-1.5-pro-latest', 'gemini-2.5-pro']
+            # Expanded fallback list with delay logic
+            candidates = [
+                'gemini-2.0-flash-exp', 
+                'gemini-1.5-flash', 
+                'gemini-1.5-pro',
+                'gemini-1.0-pro'
+            ]
             
+            last_error = ""
             for m in candidates:
-                try:
-                    model = genai.GenerativeModel(m)
-                    if image_data:
-                        response = model.generate_content([prompt, image_data])
-                    else:
-                        response = model.generate_content(prompt)
-                    return response.text
-                except Exception:
-                    continue
-            return "Error: All Gemini models busy."
+                # Retry each model up to 2 times
+                for attempt in range(2):
+                    try:
+                        model = genai.GenerativeModel(m)
+                        if image_data:
+                            response = model.generate_content([prompt, image_data])
+                        else:
+                            response = model.generate_content(prompt)
+                        return response.text
+                    except Exception as e:
+                        last_error = str(e)
+                        # If Rate Limit (429), wait longer
+                        if "429" in str(e) or "ResourceExhausted" in str(e):
+                            time.sleep(2)
+                        else:
+                            time.sleep(1)
+                        continue
+            return f"Error: System busy. Please wait 10s and try again. (Details: {last_error})"
         except Exception as e:
-            return f"Gemini Error: {str(e)}"
+            return f"Gemini Connection Error: {str(e)}"
     return "Error: Provider not supported in this version."
 
 # --- Helper Functions ---
@@ -484,4 +498,3 @@ elif st.session_state.step == 'evaluation':
     if st.button("Start New Interview"):
         for key in st.session_state.keys(): del st.session_state[key]
         st.rerun()
-
