@@ -81,9 +81,7 @@ def call_llm(provider, model_name, api_key, prompt, image_data=None):
             genai.configure(api_key=api_key)
             # Expanded fallback list with delay logic
             candidates = [
-                'gemini-2.0-flash-exp', 
-                'gemini-1.5-flash', 
-                'gemini-1.5-pro',
+                'gemini-2.5-flash-live',
                 'gemini-2.5-pro',
                 'gemini-2.5-flash'
             ]
@@ -499,5 +497,6 @@ elif st.session_state.step == 'evaluation':
     if st.button("Start New Interview"):
         for key in st.session_state.keys(): del st.session_state[key]
         st.rerun()
+
 
 
